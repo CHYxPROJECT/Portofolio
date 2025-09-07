@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portofolio Saya Nanalitama</title>
+  <style>
+    :root { --bg:#0f172a; --panel:#1e293b; --accent:#38bdf8; --text:#f1f5f9; --muted:#94a3b8; --card:#334155; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'Roboto Slab',serif;
+      background:linear-gradient(160deg,#4b0082,#fff);
+      min-height:100vh;color:var(--text);overflow-x:hidden;
+    }
+    a{color:var(--accent);text-decoration:none}
+
+    /* AUTH SCREEN */
+    #auth-screen{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;background:rgba(15,23,42,.95);z-index:1000;flex-direction:column;transition:transform .6s ease}
+    #auth-screen.slide-out{transform:translateY(-100%)}
+    .auth-box{background:var(--panel);padding:30px;border-radius:16px;box-shadow:0 0 25px rgba(0,0,0,.6);text-align:center;width:280px}
+    .auth-box h2{margin-bottom:20px}
+    .auth-box input{width:100%;padding:10px;margin-bottom:12px;border:none;border-radius:8px;outline:none}
+    .auth-box button{width:100%;padding:10px;border:none;border-radius:8px;background:var(--accent);color:#000;font-weight:bold;cursor:pointer;margin-bottom:10px}
+    .auth-box p{font-size:.85rem;color:var(--muted)}
+    .auth-box a{cursor:pointer;color:var(--accent)}
+    #register-form{display:none}
+    #login-form.active{display:block}
+    #register-form.active{display:block}
+
+    /* HEADER */
+    header{padding:20px;text-align:center;background:var(--panel);border-bottom:3px solid var(--accent)}
+    header h1{font-size:1.4rem;margin-bottom:6px}
+    header p{color:var(--muted);font-size:.9rem}
+
+    /* MAIN */
+    main{
+      flex:1;display:flex;align-items:center;justify-content:center;
+      padding:20px; text-align:center;
+    }
+
+    /* SECTION TRANSITIONS — aman dari bug */
+    section{
+      max-width:700px;
+      opacity:0; transform:translateX(0);
+      transition:transform .6s ease, opacity .6s ease;
+      will-change:transform, opacity;
+      padding-bottom:140px; /* biar konten ga ketutup toolbar */
+    }
+    /* hanya active atau exiting yang ditampilkan */
+    section:not(.active):not(.exiting){ display:none; }
+    section.active{ display:block; opacity:1; transform:translateX(0) }
+    section.exiting{ display:block; opacity:0 }
+    section.exiting.exit-left{  transform:translateX(-100%) }
+    section.exiting.exit-right{ transform:translateX(100%) }
+
+    h3{margin:20px 0;font-size:1.2rem;border-left:6px solid var(--accent);padding-left:10px;text-align:left}
+
+    /* CARDS */
+    .cards{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:20px}
+    .card{background:var(--card);border:2px solid var(--panel);border-radius:12px;padding:14px;transition:.2s}
+    .card:hover{transform:translateY(-6px);border-color:var(--accent)}
+    .card h4{margin-bottom:6px;font-size:1rem}
+    .card p{color:var(--muted);font-size:.8rem}
+
+    /* SKILLS */
+    .skill{margin-bottom:14px;text-align:left}
+    .skill span{display:block;margin-bottom:6px}
+    .bar{background:#1e293b;border:2px solid var(--accent);border-radius:6px;overflow:hidden}
+    .bar-fill{background:var(--accent);height:12px;width:0%;transition:width 1.5s ease-in-out}
+
+    /* TOOLBAR */
+    .toolbar{
+      display:flex;justify-content:space-around;align-items:center;
+      position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+      background:rgba(30,41,59,.9);
+      padding:14px 20px;width:90%;max-width:500px;border-radius:50px;
+      backdrop-filter:blur(10px);border:3px solid transparent;
+      animation:rgb-glow 6s linear infinite;z-index:9999;
+    }
+    .toolbar button{
+      background:none;border:none;color:var(--text);font-size:.8rem;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:4px;transition:.25s;flex:1
+    }
+    .toolbar button:hover{transform:scale(1.08)}
+    .toolbar button.active{color:var(--accent)}
+
+    /* HOLOGRAM PROFILE */
+    .holo-container{position:relative;display:inline-block;width:160px;height:160px;margin-bottom:20px}
+    .holo-border{position:absolute;inset:0;border-radius:50%;background:conic-gradient(red,orange,yellow,lime,cyan,blue,violet,red);filter:blur(10px);opacity:.6;animation:spin 6s linear infinite}
+    .holo-img{width:160px;height:160px;border-radius:50%;object-fit:cover;position:relative;z-index:2;transition:transform .2s, filter .2s;box-shadow:0 0 25px rgba(255,255,255,.6)}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    @media (prefers-reduced-motion: reduce){
+      *{animation:none!important;transition:none!important}
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap" rel="stylesheet">
+  <!-- React & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <!-- AUTH -->
+  <div id="auth-screen">
+    <div class="auth-box">
+      <form id="login-form" class="active">
+        <h2>Login</h2>
+        <input type="text" placeholder="Username" required>
+        <input type="password" placeholder="Password" required>
+        <button type="submit">Masuk</button>
+        <p>Belum punya akun? <a id="show-register">Daftar</a></p>
+      </form>
+      <form id="register-form">
+        <h2>Daftar</h2>
+        <input type="text" placeholder="Username" required>
+        <input type="password" placeholder="Password" required>
+        <button type="submit">Daftar</button>
+        <p>Sudah punya akun? <a id="show-login">Login</a></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO -->
+  <div id="portfolio" style="display:none">
+    <header>
+      <h1>👾 Portofolio Game & Tech</h1>
+      <p>Frontend • Game Enthusiast • Pixel Artist</p>
+    </header>
+
+    <main>
+      <section id="about" class="active">
+        <div id="react-profile"></div>
+        <h3>🎮 Tentang Saya</h3>
+        <p>Saya adalah developer yang suka menggabungkan <b>teknologi web</b> dengan <b>Elemen game</b>. 
+        Membuat website Dengan Html, .</p>
+      </section>
+
+      <section id="skills">
+        <h3>🛠️ Skill</h3>
+        <div class="skill"><span>HTML & CSS</span><div class="bar"><div class="bar-fill" style="width:90%"></div></div></div>
+        <div class="skill"><span>JavaScript</span><div class="bar"><div class="bar-fill" style="width:80%"></div></div></div>
+        <div class="skill"><span>Game Design</span><div class="bar"><div class="bar-fill" style="width:70%"></div></div></div>
+        <div class="skill"><span>Pixel Art</span><div class="bar"><div class="bar-fill" style="width:60%"></div></div></div>
+      </section>
+
+      <section id="projects">
+        <h3>🚀 Proyek</h3>
+        <div class="cards">
+          <div class="card"><h4>🌱 Grow a Garden</h4><p>E-commerce bertema game farming.</p></div>
+          <div class="card"><h4>👾 Pixel Shooter</h4><p>Mini game berbasis JavaScript Canvas.</p></div>
+          <div class="card"><h4>📚 EduGame</h4><p>Platform belajar interaktif dengan sistem poin.</p></div>
+        </div>
+      </section>
+
+      <section id="socials">
+        <h3>🌐 Sosial Media</h3>
+        <p>📧 Email: <a href="#">nanalitama@email.com</a></p>
+        <p>🐙 GitHub: <a href="#">github.com/CHYxPROJECT</a></p>
+        <p>📱 WhatsApp: <a href="#">wa.me/6289699203630</a></p>
+        <p>📸 Instagram: <a href="#">instagram.com/.</a></p>
+      </section>
+    </main>
+
+    <div class="toolbar">
+      <button data-target="about" class="active">👤<span>Tentang</span></button>
+      <button data-target="skills">⚡<span>Skill</span></button>
+      <button data-target="projects">🚀<span>Proyek</span></button>
+      <button data-target="socials">🌐<span>Sosmed</span></button>
+    </div>
+  </div>
+
+  <!-- MUSIC -->
+  <audio id="bg-music" loop>
+    <!-- Placeholder bebas lisensi. Ganti src-mu sendiri kalau perlu. -->
+    <source src="https://b.top4top.io/m_353732gug0.mp3" type="audio/mp3">
+  </audio>
+
+  <!-- REACT HOLOGRAM -->
+  <script type="text/babel">
+    function HoloProfile() {
+      const imgRef = React.useRef(null);
+      const handleMove = (e) => {
+        const rect = imgRef.current.getBoundingClientRect();
+        const x = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
+        const y = (e.clientY ?? e.touches?.[0]?.clientY) - rect.top;
+        const cx = rect.width/2, cy = rect.height/2;
+        const rx = ((y - cy) / cy) * -15;
+        const ry = ((x - cx) / cx) * 15;
+        imgRef.current.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+        imgRef.current.style.filter = `hue-rotate(${x/2}deg) saturate(1.4) brightness(1.2)`;
+      };
+      const reset = () => {
+        imgRef.current.style.transform = "rotateX(0deg) rotateY(0deg)";
+        imgRef.current.style.filter = "none";
+      };
+      return (
+        <div className="holo-container">
+          <div className="holo-border"></div>
+          <img
+            ref={imgRef}
+            src="https://f.top4top.io/p_3536dvczh0.jpg"
+            alt="Profile"
+            className="holo-img"
+            onMouseMove={handleMove}
+            onMouseLeave={reset}
+            onTouchMove={handleMove}
+            onTouchEnd={reset}
+          />
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("react-profile")).render(<HoloProfile />);
+  </script>
+
+  <!-- NAV + MUSIC + FIX TRANSITION -->
+  <script>
+    const authScreen=document.getElementById("auth-screen");
+    const portfolio=document.getElementById("portfolio");
+    const loginForm=document.getElementById("login-form");
+    const registerForm=document.getElementById("register-form");
+    const showLoginBtn=document.getElementById("show-login");
+    const showRegisterBtn=document.getElementById("show-register");
+    const music=document.getElementById("bg-music");
+    let registeredUser=null;
+
+    showLoginBtn?.addEventListener('click', ()=>{loginForm.classList.add("active");registerForm.classList.remove("active")});
+    showRegisterBtn?.addEventListener('click', ()=>{registerForm.classList.add("active");loginForm.classList.remove("active")});
+
+    function enterPortfolio(){
+      authScreen.classList.add("slide-out");
+      setTimeout(()=>{
+        authScreen.style.display="none";
+        portfolio.style.display="block";
+        music.volume=0.5;
+        music.play().catch(err=>console.log("Autoplay dicegah:",err));
+      },600);
+    }
+
+    loginForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const username=loginForm.querySelector("input[type=text]").value.trim();
+      const password=loginForm.querySelector("input[type=password]").value.trim();
+      if(!registeredUser){alert("Belum ada akun. Silakan daftar dulu!");return}
+      if(username===registeredUser.username&&password===registeredUser.password){ enterPortfolio(); }
+      else{ alert("Username atau password salah!"); }
+    });
+
+    registerForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const username=registerForm.querySelector("input[type=text]").value.trim();
+      const password=registerForm.querySelector("input[type=password]").value.trim();
+      if(username.length<3||password.length<4){alert("Username min 3 huruf, password min 4 huruf.");return}
+      registeredUser={username,password};
+      alert("Registrasi berhasil! Silakan login.");
+      registerForm.classList.remove("active");
+      loginForm.classList.add("active");
+    });
+
+    // ====== FIX: Navigasi aman, tanpa bug saat klik cepat ======
+    const buttons=[...document.querySelectorAll('.toolbar button')];
+    const sections=[...document.querySelectorAll('main section')];
+    let activeSection=document.querySelector('main section.active');
+    let activeIndex=sections.indexOf(activeSection);
+    let isAnimating=false;
+
+    function switchSection(targetId, index){
+      const target=document.getElementById(targetId);
+      if(!target || target===activeSection || isAnimating) return;
+
+      isAnimating=true;
+
+      // tombol aktif
+      buttons.forEach(b=>b.classList.remove('active'));
+      buttons[index].classList.add('active');
+
+      // arah animasi
+      const direction = index>activeIndex ? 'right' : 'left';
+      activeSection.classList.add('exiting', direction==='right' ? 'exit-left' : 'exit-right');
+      activeSection.classList.remove('active');
+
+      // tampilkan target
+      target.classList.add('active');
+      target.classList.remove('exiting','exit-left','exit-right');
+
+      // selesai animasi -> bereskan kelas
+      const onDone=()=>{
+        activeSection.classList.remove('exiting','exit-left','exit-right');
+        activeSection.removeEventListener('transitionend', onDone);
+        activeSection = target;
+        activeIndex = index;
+        isAnimating=false;
+      };
+      // jika device tidak memicu transitionend (edge case), fallback timeout
+      const fallback=setTimeout(onDone, 700);
+      activeSection.addEventListener('transitionend', ()=>{
+        clearTimeout(fallback);
+        onDone();
+      }, { once:true });
+    }
+
+    buttons.forEach((btn, index)=>{
+      btn.addEventListener('click', ()=> switchSection(btn.dataset.target, index));
+    });
+  </script>
+</body>
+</html>
